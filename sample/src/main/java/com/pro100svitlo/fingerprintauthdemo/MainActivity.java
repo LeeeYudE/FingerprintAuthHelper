@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,10 +46,9 @@ public class MainActivity extends AppCompatActivity implements FahListener {
 
 
         mFAH = new FingerprintAuthHelper.Builder(this, this)
-                .setTryTimeOut(2 * 45 * 1000)
+                .setTryTimeOut(2 *45 * 1000)
                 .setKeyName(MainActivity.class.getSimpleName())
                 .setLoggingEnable(true)
-                .setMaxTryCount(3)
                 .build();
         boolean isHardwareEnable = mFAH.isHardwareEnable();
 
@@ -88,8 +88,8 @@ public class MainActivity extends AppCompatActivity implements FahListener {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         mFAH.stopListening();
     }
 
@@ -118,15 +118,13 @@ public class MainActivity extends AppCompatActivity implements FahListener {
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    startActivity(new Intent(MainActivity.this, SecondActivity.class));
+                    goToSecondActivity();
                 }
             }, TIME_OUT);
         } else if (mFAH != null){
-            errorMess = String.format(getString(R.string.appCodeActivity_tv_fingerprintTryCount),
-                    errorMess, mFAH.getTryCountLeft());
             Toast.makeText(this, errorMess, Toast.LENGTH_SHORT).show();
             switch (errorType){
-                case FahErrorType.General.LOCK_SCREEN_DISABLED:
+                case FahErrorType.General.HARDWARE_DISABLED:
                 case FahErrorType.General.NO_FINGERPRINTS:
                     mFAH.showSecuritySettingsDialog();
                     break;
@@ -156,6 +154,10 @@ public class MainActivity extends AppCompatActivity implements FahListener {
         }
     }
 
+    private void goToSecondActivity() {
+        startActivity(new Intent(MainActivity.this, SecondActivity.class));
+    }
+
     private void setFingerprintListening(){
         DrawableCompat.setTint(mFingerprintIcon.getDrawable(), mFpColorNormal);
         mFingerprintText.setTextColor(mFpColorNormal);
@@ -173,5 +175,10 @@ public class MainActivity extends AppCompatActivity implements FahListener {
                 TimeUnit.MILLISECONDS.toSeconds(millis) -
                         TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis))
         );
+    }
+
+    public void onEnterOtherMethodClick(View view) {
+        mFAH.cleanTimeOut();
+        goToSecondActivity();
     }
 }
